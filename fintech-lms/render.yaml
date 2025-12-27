@@ -1,0 +1,30 @@
+services:
+  # Django Backend Service
+  - type: web
+    name: fintech-lms-backend
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: cd lms_backend && pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate
+    startCommand: cd lms_backend && gunicorn lms_backend.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        value: fintech-lms-backend.onrender.com
+      - key: CORS_ALLOW_ALL_ORIGINS
+        value: True
+
+  # React Frontend (Static Site)
+  - type: web
+    name: fintech-lms-frontend
+    runtime: static
+    buildCommand: cd lms_frontend && npm install && npm run build
+    staticPublishPath: ./lms_frontend/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://fintech-lms-backend.onrender.com/api
