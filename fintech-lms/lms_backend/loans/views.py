@@ -23,7 +23,6 @@ class LoanProductView(APIView):
         serializer.save()
         return Response(serializer.data)
     
-      # 🔹 UPDATE (PUT)
     def put(self, request, id):
         product = get_object_or_404(LoanProduct, id=id)
 

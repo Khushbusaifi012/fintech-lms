@@ -8,7 +8,7 @@ export default function ApplicationsList({ refreshKey }) {
 
   useEffect(() => {
     load()
-  }, [refreshKey]) // 🔥 refresh when loan is closed
+  }, [refreshKey]) 
 
   function load() {
     setLoading(true)
