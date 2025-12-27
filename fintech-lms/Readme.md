@@ -21,8 +21,8 @@ Frontend:-
 
 4.Chart.js & react-chartjs-2
 
-📁 Project Structure :-LMS/
-LMS/
+📁 Project Structure :-fintech-lms/
+fintech-lms/
 ├── lms_backend/
 │   ├── manage.py
 │   ├── requirements.txt
