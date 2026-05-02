@@ -13,6 +13,7 @@ import LoansList from './components/LoansList'
 
 export default function App() {
   const [view, setView] = useState('dashboard')
+  const [productRefreshKey, setProductRefreshKey] = useState(0)
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
@@ -25,8 +26,8 @@ export default function App() {
 
         {view === 'products' && (
           <>
-            <ProductForm />
-            <ProductList />
+            <ProductForm onCreated={() => setProductRefreshKey(k => k + 1)} />
+            <ProductList refreshKey={productRefreshKey} />
           </>
         )}
 

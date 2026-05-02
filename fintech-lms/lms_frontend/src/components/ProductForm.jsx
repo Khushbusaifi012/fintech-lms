@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import api from '../api'
 
-export default function ProductForm() {
+export default function ProductForm({ onCreated }) {
   const [form, setForm] = useState({
     name: '',
     interest_rate: '',
@@ -17,20 +17,50 @@ export default function ProductForm() {
     return () => clearTimeout(id)
   }, [toast])
 
+  function apiErrorMessage(err, fallback) {
+    const data = err.response?.data
+    if (typeof data === 'string' && data.trim()) return data
+    if (data?.detail) return String(Array.isArray(data.detail) ? data.detail[0] : data.detail)
+    if (data && typeof data === 'object') {
+      const pairs = Object.entries(data)
+      if (pairs.length === 1) {
+        const [k, v] = pairs[0]
+        const msg = Array.isArray(v) ? v[0] : v
+        return `${k}: ${msg}`
+      }
+      return JSON.stringify(data)
+    }
+    if (!err.response) return `${fallback} (check API URL / network)`
+    return fallback
+  }
+
   async function submit(e) {
     e.preventDefault()
+    const interest_rate = parseFloat(form.interest_rate)
+    const ltv = parseFloat(form.ltv)
+    const min_amount = parseFloat(form.min_amount)
+    const max_amount = parseFloat(form.max_amount)
+    if ([interest_rate, ltv, min_amount, max_amount].some(n => Number.isNaN(n))) {
+      setToast({ text: 'Enter valid numbers for rate, LTV, and amounts', type: 'error' })
+      return
+    }
     try {
       await api.post('/loan-products/', {
-        ...form,
-        interest_rate: +form.interest_rate,
-        ltv: +form.ltv,
-        min_amount: +form.min_amount,
-        max_amount: +form.max_amount,
+        name: form.name.trim(),
+        interest_rate,
+        ltv,
+        min_amount,
+        max_amount,
       })
       setToast({ text: 'Product created successfully ✅', type: 'success' })
       setForm({ name: '', interest_rate: '', ltv: '', min_amount: '', max_amount: '' })
+      onCreated?.()
     } catch (err) {
-      setToast({ text: 'Error creating product', type: 'error' })
+      console.error(err)
+      setToast({
+        text: apiErrorMessage(err, 'Error creating product'),
+        type: 'error',
+      })
     }
   }
 

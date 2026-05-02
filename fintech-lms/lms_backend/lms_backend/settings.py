@@ -18,9 +18,6 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load `.env` from this package dir up toward the filesystem root (nested repo layouts).
-# `override=True` so values in `.env` win over inherited env vars — e.g. a shell `DATABASE_URL`
-# pointing at `sqlite:////data/app.db` would otherwise silence your local Postgres/SQLite config.
 _env_loaded = False
 _env_dir = BASE_DIR
 for _ in range(8):
@@ -40,9 +37,6 @@ SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret")
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
-
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -66,10 +60,6 @@ CSRF_TRUSTED_ORIGINS = [
 CORS_ALLOWED_ORIGINS = [
     "https://fintech-lms-frontend.onrender.com",
 ]
-
-# For development, you can also allow all origins (already set to True above)
-# CORS_ALLOW_ALL_ORIGINS = True  # This is already set on line 66
-
 
 
 MIDDLEWARE = [
@@ -182,7 +172,9 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
-    ]
+    ],
+    # No session auth → browser POSTs from the SPA do not hit CSRF checks (session auth is on by default).
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
 }
 
 SIMPLE_JWT = {

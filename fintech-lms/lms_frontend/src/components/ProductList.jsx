@@ -2,20 +2,22 @@ import React, { useEffect, useState } from 'react'
 import api from '../api'
 import { normalizeList } from '../utils/normalizeList'
 
-export default function ProductList(){
+export default function ProductList({ refreshKey }) {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(()=>{
     let mounted = true
+    setLoading(true)
+    setError(null)
     api.get('/loan-products/').then(res=>{
       if(mounted) setProducts(normalizeList(res.data))
     }).catch(err=>{
       if(mounted) setError(err.message || 'Failed to load')
     }).finally(()=>{ if(mounted) setLoading(false) })
     return ()=> mounted = false
-  },[])
+  },[refreshKey])
 
   if(loading) return <div>Loading products...</div>
   if(error) return <div style={{color:'red'}}>Error: {error}</div>
