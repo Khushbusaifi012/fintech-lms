@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import api from '../api'
+import { normalizeList } from '../utils/normalizeList'
 
 export default function ApplicationForm() {
   const [products, setProducts] = useState([])
@@ -125,7 +126,7 @@ export default function ApplicationForm() {
 
           <select name="loan_product" value={form.loan_product} onChange={handleChange} required>
             <option value="">Select Loan Product</option>
-            {products.map(p => (
+            {(Array.isArray(products) ? products : []).map(p => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>

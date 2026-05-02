@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import api from '../api'
+import { normalizeList } from '../utils/normalizeList'
 
 export default function CollateralForm({ onSuccess }) {
   const [loanApplicationId, setLoanApplicationId] = useState('')
@@ -14,8 +15,8 @@ export default function CollateralForm({ onSuccess }) {
   useEffect(() => {
     async function loadApplications() {
       try {
-        const res = await api.get('/loan-applications')
-        setApplications(res.data)
+        const res = await api.get('/loan-applications/')
+        setApplications(normalizeList(res.data))
       } catch (err) {
         console.error(err)
       }
@@ -109,7 +110,7 @@ export default function CollateralForm({ onSuccess }) {
             onChange={e => setLoanApplicationId(e.target.value)}
           >
             <option value="">Select...</option>
-            {applications.map(a => (
+            {(Array.isArray(applications) ? applications : []).map(a => (
               <option key={a.id} value={a.id}>
                 {a.customer_name} (#{a.id})
               </option>

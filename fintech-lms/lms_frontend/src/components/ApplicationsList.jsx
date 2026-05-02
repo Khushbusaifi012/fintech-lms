@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import api from '../api'
+import { normalizeList } from '../utils/normalizeList'
 
 export default function ApplicationsList({ refreshKey }) {
   const [apps, setApps] = useState([])
@@ -15,7 +16,7 @@ export default function ApplicationsList({ refreshKey }) {
     setError(null)
 
     api.get('/loan-applications/')
-      .then(res => setApps(res.data))
+      .then(res => setApps(normalizeList(res.data)))
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
   }
@@ -53,7 +54,7 @@ export default function ApplicationsList({ refreshKey }) {
               </tr>
             )}
 
-            {apps.map(a => (
+            {(Array.isArray(apps) ? apps : []).map(a => (
               <tr key={a.id}>
                 <td className="mono">#{a.id}</td>
                 <td>{a.customer_name}</td>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import api from '../api'
+import { normalizeList } from '../utils/normalizeList'
 
 export default function ProductList(){
   const [products, setProducts] = useState([])
@@ -9,7 +10,7 @@ export default function ProductList(){
   useEffect(()=>{
     let mounted = true
     api.get('/loan-products/').then(res=>{
-      if(mounted) setProducts(res.data)
+      if(mounted) setProducts(normalizeList(res.data))
     }).catch(err=>{
       if(mounted) setError(err.message || 'Failed to load')
     }).finally(()=>{ if(mounted) setLoading(false) })
@@ -33,7 +34,7 @@ export default function ProductList(){
           </tr>
         </thead>
         <tbody>
-          {products.map(p=> (
+          {(Array.isArray(products) ? products : []).map(p=> (
             <tr key={p.id}>
               <td>{p.name}</td>
               <td>{p.interest_rate}</td>

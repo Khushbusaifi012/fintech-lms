@@ -22,6 +22,15 @@ ChartJS.register(
   Legend
 )
 
+function formatINR(n) {
+  if (n == null || Number.isNaN(Number(n))) return '₹ —'
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(Number(n))
+}
+
 /* ---------- STAT CARD COMPONENT ---------- */
 function StatCard({ title, value, delta, muted }) {
   return (
@@ -29,14 +38,14 @@ function StatCard({ title, value, delta, muted }) {
       <div className="stat-title">{title}</div>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
         <div className="stat-value">{value}</div>
-        {delta && (
+        {delta ? (
           <div
             className="stat-delta"
             style={{ color: delta.startsWith('-') ? '#DE350B' : '#00A86B' }}
           >
             {delta}
           </div>
-        )}
+        ) : null}
       </div>
       {muted && <div className="stat-muted">{muted}</div>}
     </div>
@@ -45,46 +54,52 @@ function StatCard({ title, value, delta, muted }) {
 
 /* ---------- DASHBOARD COMPONENT ---------- */
 export default function Dashboard() {
+  const defaultSummary = {
+    total_disbursed: 0,
+    total_sanctioned: 0,
+    active_securities: 0,
+    total_repayment: 0,
+  }
+
   const [stats, setStats] = useState({
     activeLoans: 0,
     applications: 0,
     products: 0,
   })
 
-  const [loanSeries, setLoanSeries] = useState({ labels: [], values: [] })
+  const [summary, setSummary] = useState(defaultSummary)
+
+  const [loanSeries, setLoanSeries] = useState({
+    labels: [],
+    newLoans: [],
+    disbursements: [],
+  })
+
+  const [lastSynced, setLastSynced] = useState('')
 
   useEffect(() => {
     async function load() {
       try {
-        const [ongoingRes, appsRes, productsRes] = await Promise.all([
-          api.get('/ongoing-loans'),
-          api.get('/loan-applications'),
-          api.get('/loan-products'),
-        ])
+        const { data } = await api.get('/dashboard/graphs/')
 
+        const counts = data.counts || {}
         setStats({
-          activeLoans: ongoingRes.data.length || 0,
-          applications: appsRes.data.length || 0,
-          products: productsRes.data.length || 0,
+          activeLoans: counts.active_loans ?? 0,
+          applications: counts.applications ?? 0,
+          products: counts.products ?? 0,
         })
 
-        const labels = []
-        const values = []
-        const now = new Date()
+        setSummary({ ...defaultSummary, ...data.summary })
 
-        for (let i = 9; i >= 0; i--) {
-          const d = new Date(now)
-          d.setDate(now.getDate() - i)
+        setLoanSeries({
+          labels: data.labels || [],
+          newLoans: data.new_loans || [],
+          disbursements: data.disbursements || [],
+        })
 
-          labels.push(
-            d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
-          )
-          values.push(
-            Math.max(0, Math.round((ongoingRes.data.length || 0) * (0.5 + Math.random())) + i)
-          )
-        }
-
-        setLoanSeries({ labels, values })
+        setLastSynced(
+          new Date().toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+        )
       } catch (err) {
         console.error('Dashboard load error', err)
       }
@@ -93,13 +108,16 @@ export default function Dashboard() {
     load()
   }, [])
 
+  const recentLoans =
+    loanSeries.newLoans.length > 0 ? loanSeries.newLoans[loanSeries.newLoans.length - 1] : 0
+
   /* ---------- CHART DATA ---------- */
   const barData = {
     labels: loanSeries.labels,
     datasets: [
       {
         label: 'New Loans',
-        data: loanSeries.values,
+        data: loanSeries.newLoans,
         backgroundColor: 'rgba(11,91,255,0.8)',
         borderRadius: 6,
       },
@@ -111,7 +129,7 @@ export default function Dashboard() {
     datasets: [
       {
         label: 'Disbursements',
-        data: loanSeries.values.map(v => Math.round(v * 0.8)),
+        data: loanSeries.disbursements,
         borderColor: '#ff6b6b',
         backgroundColor: 'rgba(255,107,107,0.15)',
         tension: 0.4,
@@ -122,12 +140,28 @@ export default function Dashboard() {
   /* ---------- CHART OPTIONS ---------- */
   const barOptions = {
     responsive: true,
-    plugins: { legend: { display: false } },
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}`,
+        },
+      },
+    },
   }
 
   const lineOptions = {
     responsive: true,
-    plugins: { legend: { display: false } },
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => `${ctx.dataset.label}: ${formatINR(ctx.raw)}`,
+        },
+      },
+    },
   }
 
   return (
@@ -135,7 +169,9 @@ export default function Dashboard() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
         <h2 style={{ margin: 0 }}>Loan Dashboard</h2>
-        <div style={{ color: '#6b7280' }}>Last synced 5 minutes ago</div>
+        <div style={{ color: '#6b7280' }}>
+          {lastSynced ? `Last synced ${lastSynced}` : 'Loading…'}
+        </div>
       </div>
 
       {/* KPI GRID */}
@@ -143,11 +179,11 @@ export default function Dashboard() {
         <StatCard title="Active Loans" value={stats.activeLoans} muted="Active and ongoing" />
         <StatCard title="Applications" value={stats.applications} muted="Total applications" />
         <StatCard title="Products" value={stats.products} muted="Loan products" />
-        <StatCard title="New Loans" value={loanSeries.values.at(-1) || 0} muted="Recent" />
-        <StatCard title="Total Disbursed" value="₹ --" delta="+3%" />
-        <StatCard title="Total Sanctioned" value="₹ --" />
-        <StatCard title="Active Securities" value="--" delta="+1%" />
-        <StatCard title="Total Repayment" value="₹ --" />
+        <StatCard title="New Loans" value={recentLoans} muted="Latest day in chart" />
+        <StatCard title="Total Disbursed" value={formatINR(summary.total_disbursed)} />
+        <StatCard title="Total Sanctioned" value={formatINR(summary.total_sanctioned)} />
+        <StatCard title="Active Securities" value={summary.active_securities} />
+        <StatCard title="Total Repayment" value={formatINR(summary.total_repayment)} />
       </div>
 
       {/* CHARTS */}

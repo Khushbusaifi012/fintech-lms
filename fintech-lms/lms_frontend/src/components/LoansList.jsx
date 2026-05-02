@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import api from '../api'
+import { normalizeList } from '../utils/normalizeList'
 
 export default function LoansList() {
   const [loans, setLoans] = useState([])
@@ -15,7 +16,7 @@ export default function LoansList() {
     let mounted = true
     setLoading(true)
     api.get('/ongoing-loans/')
-      .then(res => { if (mounted) setLoans(res.data) })
+      .then(res => { if (mounted) setLoans(normalizeList(res.data)) })
       .catch(e => { if (mounted) setError(e.message) })
       .finally(() => { if (mounted) setLoading(false) })
     return () => mounted = false
@@ -36,7 +37,11 @@ export default function LoansList() {
 
     try {
       await api.post(`/loans/${loanId}/close/`)
-      setLoans(loans.map(l => l.id === loanId ? { ...l, status: 'Closed' } : l))
+      setLoans(prev =>
+        (Array.isArray(prev) ? prev : []).map(l =>
+          l.id === loanId ? { ...l, status: 'Closed' } : l
+        )
+      )
       setToast({ type: 'success', text: `Loan #${loanId} closed successfully ✅` })
     } catch (e) {
       setToast({ type: 'error', text: e.response?.data || `Failed to close loan #${loanId} ❌` })
@@ -87,7 +92,7 @@ export default function LoansList() {
           </tr>
         </thead>
         <tbody>
-          {loans.map(l => (
+          {(Array.isArray(loans) ? loans : []).map(l => (
             <tr key={l.id} style={{ borderBottom: '1px solid #ccc' }}>
               <td>{l.id}</td>
               <td>{l.loan_application}</td>

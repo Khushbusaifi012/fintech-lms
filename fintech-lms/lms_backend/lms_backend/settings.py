@@ -18,9 +18,22 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load .env file from the project root (one level up from lms_backend)
-env_path = BASE_DIR.parent / "env"
-load_dotenv(env_path)
+# Load `.env` from this package dir up toward the filesystem root (nested repo layouts).
+# `override=True` so values in `.env` win over inherited env vars — e.g. a shell `DATABASE_URL`
+# pointing at `sqlite:////data/app.db` would otherwise silence your local Postgres/SQLite config.
+_env_loaded = False
+_env_dir = BASE_DIR
+for _ in range(8):
+    _candidate = _env_dir / ".env"
+    if _candidate.is_file():
+        load_dotenv(_candidate, override=True)
+        _env_loaded = True
+        break
+    if _env_dir.parent == _env_dir:
+        break
+    _env_dir = _env_dir.parent
+if not _env_loaded:
+    load_dotenv(override=False)
 
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret")
 
@@ -109,11 +122,20 @@ if database_url:
         )
     }
 else:
-    # Local development: Fallback to SQLite
+    # Local development: Fallback to SQLite. Use SQLITE_DB_PATH to store the DB outside OneDrive/sync
+    # folders if you see `unable to open database file` on Windows (Path must be writable).
+    _sqlite_override = os.getenv("SQLITE_DB_PATH")
+    _sqlite_name = (
+        Path(_sqlite_override).expanduser()
+        if _sqlite_override
+        else (BASE_DIR / "db.sqlite3")
+    )
+    _sqlite_name = _sqlite_name.resolve()
+    _sqlite_name.parent.mkdir(parents=True, exist_ok=True)
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
+            "NAME": str(_sqlite_name),
         }
     }
 

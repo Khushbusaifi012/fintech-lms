@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import api from '../api'
+import { normalizeList } from '../utils/normalizeList'
 
 export default function Collaterals({ refreshKey }) {
   const [loanId, setLoanId] = useState('')
@@ -19,8 +20,9 @@ export default function Collaterals({ refreshKey }) {
 
     try {
       const res = await api.get(`/collaterals/${targetId}/`)
-      if (res.data && res.data.length > 0) {
-        setItems(res.data)
+      const rows = normalizeList(res.data)
+      if (rows.length > 0) {
+        setItems(rows)
       } else {
         setItems([])
         setError('No collaterals found for this Loan ID')
@@ -69,7 +71,7 @@ export default function Collaterals({ refreshKey }) {
               </tr>
             </thead>
             <tbody>
-              {items.map((c, i) => (
+              {(Array.isArray(items) ? items : []).map((c, i) => (
                 <tr key={i}>
                   <td>{c.fund_name}</td>
                   <td className="mono">{c.units}</td>

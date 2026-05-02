@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, F
 from django.db.models.functions import TruncDate
 from rest_framework import status
 
@@ -169,8 +169,34 @@ class DashboardGraphView(APIView):
             loans.append(row['total_loans'])
             disbursements.append(row['total_disbursed'] or 0)
 
+        repay_agg = Loan.objects.aggregate(
+            total_repayment=Sum(F('approved_amount') - F('outstanding_amount'))
+        )
+        disbursed_agg = Loan.objects.aggregate(
+            total_principal=Sum('approved_amount')
+        )
+        sanctioned_agg = LoanApplication.objects.filter(loan__isnull=False).aggregate(
+            total=Sum('requested_amount')
+        )
+
+        counts = {
+            'active_loans': Loan.objects.filter(status='ACTIVE').count(),
+            'applications': LoanApplication.objects.count(),
+            'products': LoanProduct.objects.count(),
+        }
+        summary = {
+            'total_disbursed': float(disbursed_agg['total_principal'] or 0),
+            'total_sanctioned': float(sanctioned_agg['total'] or 0),
+            'active_securities': Collateral.objects.filter(
+                loan_application__loan__status='ACTIVE'
+            ).count(),
+            'total_repayment': float(repay_agg['total_repayment'] or 0),
+        }
+
         return Response({
-            "labels": labels,
-            "new_loans": loans,
-            "disbursements": disbursements
+            'labels': labels,
+            'new_loans': loans,
+            'disbursements': disbursements,
+            'counts': counts,
+            'summary': summary,
         })
