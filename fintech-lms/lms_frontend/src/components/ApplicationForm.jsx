@@ -26,7 +26,7 @@ export default function ApplicationForm() {
 
   useEffect(() => {
     api.get('/loan-products/')
-      .then(res => setProducts(res.data))
+      .then(res => setProducts(normalizeList(res.data)))
       .catch(err => console.error(err))
   }, [])
 
@@ -78,19 +78,22 @@ export default function ApplicationForm() {
   }
 
   return (
-  <div className="page-center">
-    {showSuccess && (
-      <div className="toast top-toast success">
-        Loan application created successfully ✅
-      </div>
-    )}
+    <div className="application-page">
+      {showSuccess && (
+        <div className="toast top-toast success">
+          Loan application created successfully ✅
+        </div>
+      )}
 
-    <div className="form-box">
-      <h2>Create Loan Application</h2>
+      <div className="card ui-panel">
+        <header className="ui-card-head">
+          <h2 className="ui-card-title">Create loan application</h2>
+          <p className="ui-card-desc">Applicant profile, product selection, and requested amount.</p>
+        </header>
 
-      {message && <p className="error-text">{message.text}</p>}
+        {message && <p className="ui-inline-error">{message.text}</p>}
 
-      <form onSubmit={submit} className="form-grid">
+        <form onSubmit={submit} className="form-grid ui-form">
 
           <input name="customer_name" placeholder="Customer Name" value={form.customer_name} onChange={handleChange} required />
 
@@ -133,8 +136,8 @@ export default function ApplicationForm() {
 
           <input type="number" name="requested_amount" placeholder="Requested Amount" value={form.requested_amount} onChange={handleChange} required />
 
-          <button type="submit" className="submit-btn">
-            Create Application
+          <button type="submit" className="btn btn-primary btn-block">
+            Create application
           </button>
 
         </form>

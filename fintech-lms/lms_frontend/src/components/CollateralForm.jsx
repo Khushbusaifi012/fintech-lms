@@ -79,7 +79,7 @@ export default function CollateralForm({ onSuccess }) {
   }
 
   return (
-    <div className="form-box" style={{ position: 'relative' }}>
+    <div className="card ui-panel collateral-shell" style={{ position: 'relative' }}>
       {/* Toast */}
       {toast && (
         <div
@@ -100,10 +100,13 @@ export default function CollateralForm({ onSuccess }) {
         </div>
       )}
 
-      <h2>Add Collateral</h2>
+      <header className="ui-card-head">
+        <h2 className="ui-card-title">Add collateral</h2>
+        <p className="ui-card-desc">Link mutual fund units to an application before submit.</p>
+      </header>
 
-      <form onSubmit={submitCollateral} className="form-grid">
-        <div>
+      <form onSubmit={submitCollateral} className="form-grid collateral-form ui-form">
+        <div className="form-field">
           <label>Loan Application</label>
           <select
             value={loanApplicationId}
@@ -118,7 +121,7 @@ export default function CollateralForm({ onSuccess }) {
           </select>
         </div>
 
-        <div>
+        <div className="form-field">
           <label>Fund Name</label>
           <input
             value={fundName}
@@ -127,7 +130,7 @@ export default function CollateralForm({ onSuccess }) {
           />
         </div>
 
-        <div>
+        <div className="form-field">
           <label>Units</label>
           <input
             type="number"
@@ -138,7 +141,7 @@ export default function CollateralForm({ onSuccess }) {
           />
         </div>
 
-        <div>
+        <div className="form-field">
           <label>NAV</label>
           <input
             type="number"
@@ -149,23 +152,24 @@ export default function CollateralForm({ onSuccess }) {
           />
         </div>
 
-        <button type="submit" className="submit-btn" disabled={loading}>
-          {loading ? 'Adding...' : 'Add Collateral'}
-        </button>
+        <div className="collateral-form-actions">
+          <button
+            type="submit"
+            className="btn btn-primary btn-collateral-submit"
+            disabled={loading}
+          >
+            {loading ? 'Adding…' : 'Add collateral'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-outline btn-collateral-submit"
+            onClick={submitLoan}
+            disabled={!loanApplicationId}
+          >
+            Submit loan
+          </button>
+        </div>
       </form>
-
-      {/* Submit Loan Button */}
-      <div style={{ textAlign: 'center', marginTop: 16 }}>
-        <button
-          type="button"
-          className="submit-btn"
-          style={{ background: '#0b5fff', width: 200 }}
-          onClick={submitLoan}
-          disabled={!loanApplicationId}
-        >
-          Submit Loan
-        </button>
-      </div>
     </div>
   )
 }

@@ -21,12 +21,20 @@ export default function ApplicationsList({ refreshKey }) {
       .finally(() => setLoading(false))
   }
 
-  if (loading) return <div>Loading applications...</div>
-  if (error) return <div style={{ color: 'red' }}>Error: {error}</div>
+  if (loading) return <div className="card ui-panel muted-loading">Loading applications…</div>
+  if (error)
+    return (
+      <div className="card ui-panel ui-inline-error-wrap">
+        Error: {error}
+      </div>
+    )
 
   return (
-    <div className="card">
-      <h3 style={{ marginBottom: 12 }}>Loan Applications</h3>
+    <div className="card ui-panel panel-block">
+      <header className="ui-card-head ui-card-head--row">
+        <h3 className="ui-card-title">Loan applications</h3>
+        <p className="ui-card-desc">All submitted and in-progress applications.</p>
+      </header>
 
       <div className="table-wrap">
         <table className="app-table">

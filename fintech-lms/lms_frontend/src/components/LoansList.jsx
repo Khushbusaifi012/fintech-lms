@@ -51,117 +51,86 @@ export default function LoansList() {
     }
   }
 
-  if (loading) return <div>Loading loans...</div>
-  if (error) return <div style={{ color: 'red' }}>Error: {error}</div>
+  if (loading) return <div className="card ui-panel muted-loading">Loading loans…</div>
+  if (error)
+    return (
+      <div className="card ui-panel ui-inline-error-wrap">
+        Error: {error}
+      </div>
+    )
 
   return (
-    <div style={{ position: 'relative' }}>
-      <h2>Ongoing Loans</h2>
+    <div className="loans-page" style={{ position: 'relative' }}>
+      <div className="card ui-panel panel-block">
+        <header className="ui-card-head ui-card-head--row">
+          <h2 className="ui-card-title">Ongoing loans</h2>
+          <p className="ui-card-desc">Active portfolio; close loans when settled.</p>
+        </header>
 
-      {/* Toast */}
-      {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '16px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            padding: '10px 18px',
-            borderRadius: '10px',
-            fontSize: '14px',
-            fontWeight: 600,
-            color: '#fff',
-            backgroundColor: toast.type === 'success' ? '#16a34a' : '#dc2626',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
-            zIndex: 9999,
-          }}
-        >
-          {toast.text}
+        {toast && (
+          <div role="status" className={`toast-floating toast-floating--${toast.type}`}>
+            {toast.text}
+          </div>
+        )}
+
+        <div className="table-wrap">
+          <table className="app-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Application</th>
+                <th>Approved</th>
+                <th>Outstanding</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(Array.isArray(loans) ? loans : []).map(l => (
+                <tr key={l.id}>
+                  <td className="mono">{l.id}</td>
+                  <td className="mono">{l.loan_application}</td>
+                  <td className="amount">₹ {l.approved_amount}</td>
+                  <td className="amount">₹ {l.outstanding_amount}</td>
+                  <td>
+                    <span className={`ui-badge ui-badge--${l.status?.toLowerCase?.() || 'muted'}`}>
+                      {l.status}
+                    </span>
+                  </td>
+                  <td>
+                    {l.status !== 'Closed' ? (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-primary"
+                        onClick={() => openConfirm(l)}
+                        disabled={closingId === l.id}
+                      >
+                        {closingId === l.id ? 'Closing…' : 'Close'}
+                      </button>
+                    ) : (
+                      <span className="ui-closed-label">Closed</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '12px' }}>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Application</th>
-            <th>Approved</th>
-            <th>Outstanding</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {(Array.isArray(loans) ? loans : []).map(l => (
-            <tr key={l.id} style={{ borderBottom: '1px solid #ccc' }}>
-              <td>{l.id}</td>
-              <td>{l.loan_application}</td>
-              <td>{l.approved_amount}</td>
-              <td>{l.outstanding_amount}</td>
-              <td>{l.status}</td>
-              <td>
-                {l.status !== 'Closed' ? (
-                  <button
-                    onClick={() => openConfirm(l)}
-                    disabled={closingId === l.id}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      backgroundColor: '#0b5fff',
-                      color: '#fff',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {closingId === l.id ? 'Closing...' : 'Close'}
-                  </button>
-                ) : (
-                  <span style={{ color: '#16a34a', fontWeight: '600' }}>Closed</span>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* Confirmation Modal */}
       {showConfirm && selectedLoan && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9998,
-          }}
-        >
-          <div style={{
-            background: '#fff',
-            padding: '24px',
-            borderRadius: '12px',
-            maxWidth: '400px',
-            width: '90%',
-            textAlign: 'center',
-          }}>
-            <h3>Confirm Close Loan</h3>
-            <p>Are you sure you want to close loan #{selectedLoan.id}?</p>
-            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-around' }}>
-              <button
-                onClick={() => setShowConfirm(false)}
-                style={{ padding: '6px 14px', borderRadius: '8px', border: '1px solid #ccc' }}
-              >
+        <div className="ui-dialog-overlay" role="presentation">
+          <div className="ui-dialog" role="dialog" aria-labelledby="loan-close-title">
+            <h3 id="loan-close-title" className="ui-dialog-title">
+              Close loan?
+            </h3>
+            <p className="ui-dialog-desc">Loan #{selectedLoan.id} will be marked settled.</p>
+            <div className="ui-dialog-actions">
+              <button type="button" className="btn btn-outline" onClick={() => setShowConfirm(false)}>
                 Cancel
               </button>
-              <button
-                onClick={confirmClose}
-                style={{ padding: '6px 14px', borderRadius: '8px', backgroundColor: '#0b5fff', color: '#fff', border: 'none' }}
-              >
-                Confirm
+              <button type="button" className="btn btn-primary" onClick={confirmClose}>
+                Confirm close
               </button>
             </div>
           </div>

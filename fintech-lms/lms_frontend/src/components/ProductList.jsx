@@ -19,15 +19,25 @@ export default function ProductList({ refreshKey }) {
     return ()=> mounted = false
   },[refreshKey])
 
-  if(loading) return <div>Loading products...</div>
-  if(error) return <div style={{color:'red'}}>Error: {error}</div>
+  if (loading)
+    return <div className="card muted-loading">Loading products…</div>
+  if (error)
+    return (
+      <div className="card error-panel">
+        <strong>Error:</strong> {error}
+      </div>
+    )
 
   return (
-    <div>
-      <h2>Loan Products</h2>
-      <table>
-        <thead>
-          <tr>
+    <div className="card ui-panel panel-block">
+      <header className="ui-card-head ui-card-head--row">
+        <h2 className="ui-card-title">Loan products</h2>
+        <p className="ui-card-desc">Active catalogue available for new applications.</p>
+      </header>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
             <th>Name</th>
             <th>Interest Rate</th>
             <th>LTV (%)</th>
@@ -46,7 +56,8 @@ export default function ProductList({ refreshKey }) {
             </tr>
           ))}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   )
 }

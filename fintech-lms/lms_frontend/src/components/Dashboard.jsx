@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import api from '../api'
 import {
   Chart as ChartJS,
@@ -29,6 +29,16 @@ function formatINR(n) {
     currency: 'INR',
     maximumFractionDigits: 0,
   }).format(Number(n))
+}
+
+function readChartAxisStyles() {
+  const root = getComputedStyle(document.documentElement)
+  const axis = root.getPropertyValue('--chart-axis').trim()
+  const grid = root.getPropertyValue('--chart-grid').trim()
+  return {
+    axis: axis || '#1e293b',
+    grid: grid || 'rgba(15, 23, 42, 0.11)',
+  }
 }
 
 /* ---------- STAT CARD COMPONENT ---------- */
@@ -76,6 +86,7 @@ export default function Dashboard() {
   })
 
   const [lastSynced, setLastSynced] = useState('')
+  const [chartPaintKey, setChartPaintKey] = useState(0)
 
   useEffect(() => {
     async function load() {
@@ -108,6 +119,30 @@ export default function Dashboard() {
     load()
   }, [])
 
+  useEffect(() => {
+    const el = document.documentElement
+    const obs = new MutationObserver(() => setChartPaintKey((k) => k + 1))
+    obs.observe(el, { attributes: true, attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+
+  const { axis: axisColor, grid: gridColor } = useMemo(
+    () => readChartAxisStyles(),
+    [chartPaintKey]
+  )
+
+  const loanMax = useMemo(() => {
+    const arr = loanSeries.newLoans
+    if (!arr.length) return 0
+    return Math.max(0, ...arr.map((n) => Number(n)))
+  }, [loanSeries.newLoans])
+
+  const disbMax = useMemo(() => {
+    const arr = loanSeries.disbursements
+    if (!arr.length) return 0
+    return Math.max(0, ...arr.map((n) => Number(n)))
+  }, [loanSeries.disbursements])
+
   const recentLoans =
     loanSeries.newLoans.length > 0 ? loanSeries.newLoans[loanSeries.newLoans.length - 1] : 0
 
@@ -118,7 +153,7 @@ export default function Dashboard() {
       {
         label: 'New Loans',
         data: loanSeries.newLoans,
-        backgroundColor: 'rgba(11,91,255,0.8)',
+        backgroundColor: 'rgba(20,184,166,0.85)',
         borderRadius: 6,
       },
     ],
@@ -130,48 +165,99 @@ export default function Dashboard() {
       {
         label: 'Disbursements',
         data: loanSeries.disbursements,
-        borderColor: '#ff6b6b',
-        backgroundColor: 'rgba(255,107,107,0.15)',
-        tension: 0.4,
+        borderColor: '#14b8a6',
+        backgroundColor: 'rgba(20,184,166,0.18)',
+        borderWidth: 2,
+        tension: 0.35,
+        fill: true,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: '#14b8a6',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
       },
     ],
   }
 
   /* ---------- CHART OPTIONS ---------- */
-  const barOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}`,
+  const barOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}`,
+          },
         },
       },
-    },
-  }
+      scales: {
+        x: {
+          ticks: {
+            color: axisColor,
+            font: { size: 11, weight: '500' },
+            maxRotation: 0,
+            autoSkip: true,
+          },
+          grid: { color: gridColor },
+        },
+        y: {
+          beginAtZero: true,
+          max: loanMax === 0 ? 10 : undefined,
+          ticks: {
+            color: axisColor,
+            font: { size: 11, weight: '500' },
+          },
+          grid: { color: gridColor },
+        },
+      },
+    }),
+    [axisColor, gridColor, loanMax]
+  )
 
-  const lineOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: (ctx) => `${ctx.dataset.label}: ${formatINR(ctx.raw)}`,
+  const lineOptions = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.dataset.label}: ${formatINR(ctx.raw)}`,
+          },
         },
       },
-    },
-  }
+      scales: {
+        x: {
+          ticks: {
+            color: axisColor,
+            font: { size: 11, weight: '500' },
+            maxRotation: 0,
+            autoSkip: true,
+          },
+          grid: { color: gridColor },
+        },
+        y: {
+          beginAtZero: true,
+          max: disbMax === 0 ? 250000 : undefined,
+          ticks: {
+            color: axisColor,
+            font: { size: 11, weight: '500' },
+            callback: (v) => formatINR(v),
+          },
+          grid: { color: gridColor },
+        },
+      },
+    }),
+    [axisColor, gridColor, disbMax]
+  )
 
   return (
-    <div>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>Loan Dashboard</h2>
-        <div style={{ color: '#6b7280' }}>
-          {lastSynced ? `Last synced ${lastSynced}` : 'Loading…'}
-        </div>
+    <div className="dashboard-page">
+      <div className="dashboard-toolbar">
+        <span className="dashboard-toolbar-label">Overview</span>
+        <div className="sync-pill">{lastSynced ? `Synced · ${lastSynced}` : 'Loading…'}</div>
       </div>
 
       {/* KPI GRID */}
@@ -187,16 +273,16 @@ export default function Dashboard() {
       </div>
 
       {/* CHARTS */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 20 }}>
+      <div className="chart-grid">
         {/* Bar Chart */}
-        <div className="card" style={{ height: 300 }}>
-          <div style={{ fontSize: 14, color: '#475569', marginBottom: 8 }}>New Loans</div>
+        <div className="card chart-panel">
+          <div className="chart-panel-title">New Loans</div>
           <Bar data={barData} options={barOptions} />
         </div>
 
         {/* Line Chart */}
-        <div className="card" style={{ height: 300 }}>
-          <div style={{ fontSize: 14, color: '#475569', marginBottom: 8 }}>Loan Disbursements</div>
+        <div className="card chart-panel">
+          <div className="chart-panel-title">Loan Disbursements</div>
           <Line data={lineData} options={lineOptions} />
         </div>
       </div>

@@ -45,20 +45,26 @@ export default function Collaterals({ refreshKey }) {
   }, [refreshKey])
 
   return (
-    <div className="card" style={{ marginTop: '24px' }}>
-      <h2>Collaterals</h2>
+    <div className="card ui-panel collaterals-panel">
+      <header className="ui-card-head ui-card-head--row">
+        <h2 className="ui-card-title">Collaterals</h2>
+        <p className="ui-card-desc">Fetch holdings by loan application ID.</p>
+      </header>
 
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+      <div className="ui-toolbar">
         <input
+          className="ui-input ui-input-grow"
           value={loanId}
           onChange={e => setLoanId(e.target.value)}
-          placeholder="Loan Application ID"
+          placeholder="Loan application ID"
         />
-        <button onClick={() => fetchCollaterals()}>Fetch</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => fetchCollaterals()}>
+          Fetch
+        </button>
       </div>
 
-      {loading && <div>Loading...</div>}
-      {error && <div className="error-text">{error}</div>}
+      {loading && <div className="muted-inline">Loading…</div>}
+      {error && <div className="ui-inline-error">{error}</div>}
 
       {items.length > 0 && (
         <div className="table-wrap">
