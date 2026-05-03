@@ -120,13 +120,23 @@ if database_url:
     _on_render = os.environ.get("RENDER", "").lower() == "true"
     # Free / serverless dynos: persistent connections often go stale → use 0 on Render
     _conn_max_age = 0 if _on_render else 600
-    DATABASES = {
-        "default": dj_database_url.parse(
-            _db_url,
-            conn_max_age=_conn_max_age,
-            ssl_require="render.com" in _db_url,
-        )
-    }
+    # Internal hostnames often omit "render.com"; Render Postgres still expects SSL from web services
+    _ssl = "render.com" in _db_url
+    if _on_render and os.getenv("DATABASE_SSL_REQUIRE", "true").lower() not in ("0", "false", "no"):
+        _ssl = True
+    if os.getenv("DATABASE_SSL_REQUIRE", "").lower() in ("0", "false", "no"):
+        _ssl = False
+    _db_cfg = dj_database_url.parse(
+        _db_url,
+        conn_max_age=_conn_max_age,
+        ssl_require=_ssl,
+    )
+    # Re-verify connection per request (helps free dynos + dropped PG connections)
+    _db_cfg["CONN_HEALTH_CHECKS"] = True
+    if not _db_cfg.get("OPTIONS"):
+        _db_cfg["OPTIONS"] = {}
+    _db_cfg["OPTIONS"].setdefault("connect_timeout", 10)
+    DATABASES = {"default": _db_cfg}
 else:
     # Local development: Fallback to SQLite. Use SQLITE_DB_PATH to store the DB outside OneDrive/sync
     # folders if you see `unable to open database file` on Windows (Path must be writable).

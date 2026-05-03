@@ -18,6 +18,33 @@ from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.conf import settings
+from django.db import connection
+import os
+
+
+@require_http_methods(["GET"])
+def healthz(_request):
+    return JsonResponse({"status": "ok"})
+
+
+@require_http_methods(["GET"])
+def db_ping(request):
+    """Set env PUBLIC_DB_DIAG=1 and open .../db-ping/?diag=1 to see error text (debugging only)."""
+    try:
+        connection.ensure_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        return JsonResponse({"db": "ok"})
+    except Exception as exc:
+        payload = {"db": "error"}
+        show_detail = settings.DEBUG or (
+            request.GET.get("diag") == "1" and os.environ.get("PUBLIC_DB_DIAG") == "1"
+        )
+        if show_detail:
+            payload["error"] = str(exc)
+            payload["exc_type"] = type(exc).__name__
+        return JsonResponse(payload, status=503)
 
 @require_http_methods(["GET"])
 def api_docs(request):
@@ -65,6 +92,8 @@ def api_docs(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('healthz/', healthz, name='healthz'),
+    path('db-ping/', db_ping, name='db-ping'),
     path('api/', include('loans.urls')),
     path('api/docs/', api_docs, name='api-docs'),
     path('', api_docs, name='root'),

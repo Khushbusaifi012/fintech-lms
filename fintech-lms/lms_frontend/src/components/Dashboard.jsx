@@ -9,7 +9,6 @@ import {
   LineElement,
   Tooltip,
   Legend,
-  Filler,
 } from 'chart.js'
 import { Bar, Line } from 'react-chartjs-2'
 
@@ -20,8 +19,7 @@ ChartJS.register(
   PointElement,
   LineElement,
   Tooltip,
-  Legend,
-  Filler
+  Legend
 )
 
 function formatINR(n) {
@@ -171,7 +169,7 @@ export default function Dashboard() {
         backgroundColor: 'rgba(20,184,166,0.18)',
         borderWidth: 2,
         tension: 0.35,
-        fill: true,
+        fill: false,
         pointRadius: 3,
         pointHoverRadius: 5,
         pointBackgroundColor: '#14b8a6',
