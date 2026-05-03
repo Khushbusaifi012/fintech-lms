@@ -37,7 +37,17 @@ SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret")
 
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",")
+_allowed_raw = os.getenv("ALLOWED_HOSTS", "*")
+ALLOWED_HOSTS = [h.strip() for h in _allowed_raw.split(",") if h.strip()]
+if not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ["*"]
+# Render may assign a unique hostname (e.g. service-name-abc1.onrender.com)
+if (
+    os.environ.get("RENDER", "").lower() == "true"
+    and "*" not in ALLOWED_HOSTS
+    and ".onrender.com" not in ALLOWED_HOSTS
+):
+    ALLOWED_HOSTS.append(".onrender.com")
 
 INSTALLED_APPS = [
     'django.contrib.admin',
