@@ -79,23 +79,9 @@ export default function CollateralForm({ onSuccess }) {
   }
 
   return (
-    <div className="card ui-panel collateral-shell" style={{ position: 'relative' }}>
-      {/* Toast */}
+    <div className="card ui-panel collateral-shell">
       {toast && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 16,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            background: toast.type === 'success' ? '#16a34a' : '#dc2626',
-            color: '#fff',
-            padding: '10px 18px',
-            borderRadius: 10,
-            fontWeight: 600,
-            zIndex: 9999,
-          }}
-        >
+        <div role="status" className={`toast-floating toast-floating--${toast.type}`}>
           {toast.text}
         </div>
       )}

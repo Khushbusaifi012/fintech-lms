@@ -71,13 +71,11 @@ export default function ProductForm({ onCreated }) {
         <p className="ui-card-desc">Define rate, LTV band, and sanctioned amount limits.</p>
       </header>
 
-      <div className="toast-wrap">
-        {toast && (
-          <div className={`toast ${toast.type === 'success' ? 'toast-success' : 'toast-error'}`}>
-            {toast.text}
-          </div>
-        )}
-      </div>
+      {toast && (
+        <div role="status" className={`toast-floating toast-floating--${toast.type}`}>
+          {toast.text}
+        </div>
+      )}
 
       <form onSubmit={submit} className="form-grid ui-form">
         <div className="form-field">
