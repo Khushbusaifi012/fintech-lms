@@ -165,7 +165,10 @@ class DashboardGraphView(APIView):
         disbursements = []
 
         for row in qs:
-            labels.append(row['day'].strftime('%d %b'))
+            day = row.get('day')
+            if day is None:
+                continue
+            labels.append(day.strftime('%d %b'))
             loans.append(row['total_loans'])
             disbursements.append(row['total_disbursed'] or 0)
 
@@ -175,7 +178,10 @@ class DashboardGraphView(APIView):
         disbursed_agg = Loan.objects.aggregate(
             total_principal=Sum('approved_amount')
         )
-        sanctioned_agg = LoanApplication.objects.filter(loan__isnull=False).aggregate(
+        # Avoid OneToOne reverse filter quirks across DBs: apps that actually have a Loan row
+        sanctioned_agg = LoanApplication.objects.filter(
+            id__in=Loan.objects.values_list('loan_application_id', flat=True)
+        ).aggregate(
             total=Sum('requested_amount')
         )
 
@@ -188,7 +194,9 @@ class DashboardGraphView(APIView):
             'total_disbursed': float(disbursed_agg['total_principal'] or 0),
             'total_sanctioned': float(sanctioned_agg['total'] or 0),
             'active_securities': Collateral.objects.filter(
-                loan_application__loan__status='ACTIVE'
+                loan_application_id__in=Loan.objects.filter(status='ACTIVE').values_list(
+                    'loan_application_id', flat=True
+                )
             ).count(),
             'total_repayment': float(repay_agg['total_repayment'] or 0),
         }
