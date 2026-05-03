@@ -5,8 +5,9 @@ services:
     runtime: python
     region: oregon
     plan: free
-    buildCommand: cd fintech-lms/lms_backend && pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate
-    startCommand: cd fintech-lms/lms_backend && gunicorn lms_backend.wsgi:application --bind 0.0.0.0:$PORT
+    rootDir: fintech-lms/lms_backend
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate
+    startCommand: gunicorn lms_backend.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -23,8 +24,9 @@ services:
   - type: web
     name: fintech-lms-frontend
     runtime: static
-    buildCommand: cd fintech-lms/lms_frontend && npm install && npm run build
-    staticPublishPath: ./fintech-lms/lms_frontend/dist
+    rootDir: fintech-lms/lms_frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
     envVars:
       - key: VITE_API_BASE_URL
         value: https://fintech-lms-backend.onrender.com/api
