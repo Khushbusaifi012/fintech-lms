@@ -23,7 +23,8 @@ _env_dir = BASE_DIR
 for _ in range(8):
     _candidate = _env_dir / ".env"
     if _candidate.is_file():
-        load_dotenv(_candidate, override=True)
+        # Prefer real environment (Render, etc.); .env only fills missing keys
+        load_dotenv(_candidate, override=False)
         _env_loaded = True
         break
     if _env_dir.parent == _env_dir:

@@ -1,0 +1,4 @@
+# Root of monorepo — keep secrets out of Git (inner app uses fintech-lms/.gitignore too)
+.env
+.env.*
+!.env.example
