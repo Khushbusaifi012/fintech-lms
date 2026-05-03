@@ -255,6 +255,7 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-page">
+      {/* chart: no area fill — avoids Chart.js Filler plugin / CDN stale bundles */}
       <div className="dashboard-toolbar">
         <span className="dashboard-toolbar-label">Overview</span>
         <div className="sync-pill">{lastSynced ? `Synced · ${lastSynced}` : 'Loading…'}</div>

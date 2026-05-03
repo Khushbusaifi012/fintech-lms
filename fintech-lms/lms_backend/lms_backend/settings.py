@@ -120,9 +120,9 @@ if database_url:
     _on_render = os.environ.get("RENDER", "").lower() == "true"
     # Free / serverless dynos: persistent connections often go stale → use 0 on Render
     _conn_max_age = 0 if _on_render else 600
-    # Internal hostnames often omit "render.com"; Render Postgres still expects SSL from web services
+    # SSL: required for *.render.com external host; internal dpg-* hostnames often fail if ssl forced
     _ssl = "render.com" in _db_url
-    if _on_render and os.getenv("DATABASE_SSL_REQUIRE", "true").lower() not in ("0", "false", "no"):
+    if os.getenv("DATABASE_SSL_REQUIRE", "").lower() in ("1", "true", "yes"):
         _ssl = True
     if os.getenv("DATABASE_SSL_REQUIRE", "").lower() in ("0", "false", "no"):
         _ssl = False
