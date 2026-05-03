@@ -117,10 +117,13 @@ if database_url:
     # Production: Use PostgreSQL from DATABASE_URL
     # Hosted Render URLs use postgresql://...render.com — require SSL (old check missed postgresql://)
     _db_url = database_url
+    _on_render = os.environ.get("RENDER", "").lower() == "true"
+    # Free / serverless dynos: persistent connections often go stale → use 0 on Render
+    _conn_max_age = 0 if _on_render else 600
     DATABASES = {
         "default": dj_database_url.parse(
             _db_url,
-            conn_max_age=600,
+            conn_max_age=_conn_max_age,
             ssl_require="render.com" in _db_url,
         )
     }
@@ -179,7 +182,8 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# Manifest storage 500s if staticfiles.json and disk disagree; plain compressed is safer on PaaS
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
 # REST Framework + SimpleJWT configuration
 REST_FRAMEWORK = {
@@ -200,4 +204,29 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+    "root": {"handlers": ["console"], "level": "INFO"},
 }

@@ -9,6 +9,8 @@ services:
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate
     startCommand: gunicorn lms_backend.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
       - key: DATABASE_URL
         sync: false
       - key: SECRET_KEY
