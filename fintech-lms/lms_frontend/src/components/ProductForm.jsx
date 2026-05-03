@@ -65,7 +65,12 @@ export default function ProductForm({ onCreated }) {
   }
 
   return (
-    <div className="card ui-panel product-form" style={{ position: 'relative' }}>
+    <div className="card ui-panel product-form">
+      <header className="ui-card-head">
+        <h3 className="ui-card-title">Create loan product</h3>
+        <p className="ui-card-desc">Define rate, LTV band, and sanctioned amount limits.</p>
+      </header>
+
       <div className="toast-wrap">
         {toast && (
           <div className={`toast ${toast.type === 'success' ? 'toast-success' : 'toast-error'}`}>
@@ -73,11 +78,6 @@ export default function ProductForm({ onCreated }) {
           </div>
         )}
       </div>
-
-      <header className="ui-card-head">
-        <h3 className="ui-card-title">Create loan product</h3>
-        <p className="ui-card-desc">Define rate, LTV band, and sanctioned amount limits.</p>
-      </header>
 
       <form onSubmit={submit} className="form-grid ui-form">
         <div className="form-field">
