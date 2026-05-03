@@ -115,11 +115,13 @@ WSGI_APPLICATION = 'lms_backend.wsgi.application'
 database_url = os.getenv("DATABASE_URL")
 if database_url:
     # Production: Use PostgreSQL from DATABASE_URL
+    # Hosted Render URLs use postgresql://...render.com — require SSL (old check missed postgresql://)
+    _db_url = database_url
     DATABASES = {
         "default": dj_database_url.parse(
-            database_url,
+            _db_url,
             conn_max_age=600,
-            ssl_require=database_url.startswith("postgres://") and "render.com" in database_url
+            ssl_require="render.com" in _db_url,
         )
     }
 else:
@@ -187,6 +189,12 @@ REST_FRAMEWORK = {
     # No session auth → browser POSTs from the SPA do not hit CSRF checks (session auth is on by default).
     'DEFAULT_AUTHENTICATION_CLASSES': [],
 }
+
+# On Render/production, avoid BrowsableAPIRenderer (HTML) — it can 500 if templates/static edge cases.
+if os.environ.get("RENDER", "").lower() == "true" or not DEBUG:
+    REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
+        "rest_framework.renderers.JSONRenderer",
+    ]
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
