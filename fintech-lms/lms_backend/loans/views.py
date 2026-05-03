@@ -4,24 +4,59 @@ from django.shortcuts import render, get_object_or_404
 from django.db.models import Count, Sum, F
 from django.db.models.functions import TruncDate
 from rest_framework import status
+from rest_framework.exceptions import APIException
+from django.http import Http404
+import logging
+import os
 
 from .models import *
 from .serializers import *
 
+logger = logging.getLogger(__name__)
+
+
+def _maybe_api_error_response(exc):
+    """If EXPOSE_API_ERRORS=1 on Render, return JSON body so the browser Network tab shows the cause."""
+    if os.environ.get("EXPOSE_API_ERRORS", "").lower() not in ("1", "true", "yes"):
+        return None
+    return Response(
+        {"detail": str(exc), "exc_type": type(exc).__name__},
+        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
+
+
 # Create your views here.
 class LoanProductView(APIView):
     def get(self, request, id=None):
-        if id:
-            product = get_object_or_404(LoanProduct, id=id)
-            return Response(LoanProductSerializer(product).data)
-        products = LoanProduct.objects.all()
-        return Response(LoanProductSerializer(products, many=True).data)
+        try:
+            if id:
+                product = get_object_or_404(LoanProduct, id=id)
+                return Response(LoanProductSerializer(product).data)
+            products = LoanProduct.objects.all()
+            return Response(LoanProductSerializer(products, many=True).data)
+        except (Http404, APIException):
+            raise
+        except Exception as exc:
+            logger.exception("loan_products.get failed")
+            err = _maybe_api_error_response(exc)
+            if err is not None:
+                return err
+            raise
 
     def post(self, request):
-        serializer = LoanProductSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+        try:
+            serializer = LoanProductSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+        except APIException:
+            raise
+        except Exception as exc:
+            logger.exception("loan_products.post failed")
+            err = _maybe_api_error_response(exc)
+            if err is not None:
+                return err
+            raise
     
     def put(self, request, id):
         product = get_object_or_404(LoanProduct, id=id)
