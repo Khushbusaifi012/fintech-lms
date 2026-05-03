@@ -64,6 +64,7 @@ INSTALLED_APPS = [
 
 CSRF_TRUSTED_ORIGINS = [
     "https://fintech-lms-backend.onrender.com",
+    "https://fintech-lms-backend-e7q7.onrender.com",
     "https://fintech-lms-frontend.onrender.com",
 ]
 
