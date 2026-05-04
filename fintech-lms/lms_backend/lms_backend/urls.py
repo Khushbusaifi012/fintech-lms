@@ -75,6 +75,7 @@ def api_docs(request):
                 "GET /api/collaterals/": "List all collaterals",
                 "GET /api/collaterals/{loan_application_id}/": "Get collaterals for a loan application",
                 "POST /api/collaterals/": "Create a new collateral",
+                "DELETE /api/collaterals/item/{id}/": "Delete a collateral by its id",
             },
             "Loans": {
                 "GET /api/ongoing-loans/": "List all ongoing loans",

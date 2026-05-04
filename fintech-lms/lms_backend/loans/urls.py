@@ -3,6 +3,7 @@ from .views import (
     LoanProductView,
     LoanApplicationView,
     CollateralView,
+    CollateralItemView,
     EligibilityView,
     SubmitLoanView,
     OngoingLoansView,
@@ -25,6 +26,7 @@ urlpatterns = [
     # Collaterals
     path('collaterals/', CollateralView.as_view()),
     path('collaterals/<int:loan_application_id>/', CollateralView.as_view()),
+    path('collaterals/item/<int:id>/', CollateralItemView.as_view()),
 
     # Ongoing Loans
     path('ongoing-loans/', OngoingLoansView.as_view()),

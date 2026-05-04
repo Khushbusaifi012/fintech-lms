@@ -118,6 +118,16 @@ class CollateralView(APIView):
             collaterals = Collateral.objects.all()
         return Response(CollateralSerializer(collaterals, many=True).data)
 
+
+class CollateralItemView(APIView):
+    """Delete a single collateral by its primary key (id)."""
+
+    def delete(self, request, id):
+        collateral = get_object_or_404(Collateral, id=id)
+        collateral.delete()
+        return Response({"message": "Collateral deleted"}, status=status.HTTP_200_OK)
+
+
 class EligibilityView(APIView):
     def get(self, request, id):
         application = LoanApplication.objects.get(id=id)
