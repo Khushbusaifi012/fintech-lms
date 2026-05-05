@@ -134,9 +134,11 @@ if database_url:
     )
     # Re-verify connection per request (helps free dynos + dropped PG connections)
     _db_cfg["CONN_HEALTH_CHECKS"] = True
-    if not _db_cfg.get("OPTIONS"):
-        _db_cfg["OPTIONS"] = {}
-    _db_cfg["OPTIONS"].setdefault("connect_timeout", 10)
+    # connect_timeout is valid for PostgreSQL; SQLite's sqlite3.connect() rejects it (TypeError).
+    if _db_cfg.get("ENGINE") == "django.db.backends.postgresql":
+        if not _db_cfg.get("OPTIONS"):
+            _db_cfg["OPTIONS"] = {}
+        _db_cfg["OPTIONS"].setdefault("connect_timeout", 10)
     DATABASES = {"default": _db_cfg}
 else:
     # Local development: Fallback to SQLite. Use SQLITE_DB_PATH to store the DB outside OneDrive/sync
