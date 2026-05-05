@@ -132,6 +132,18 @@ if database_url:
         conn_max_age=_conn_max_age,
         ssl_require=_ssl,
     )
+    # SQLite DATABASE_URL: relative NAME is resolved from cwd by default — use BASE_DIR instead
+    # and ensure the directory exists (avoids OperationalError: unable to open database file).
+    if _db_cfg.get("ENGINE") == "django.db.backends.sqlite3":
+        _sqlite_db_name = _db_cfg.get("NAME") or ""
+        if _sqlite_db_name not in ("", ":memory:"):
+            _sqlite_path = Path(_sqlite_db_name).expanduser()
+            if not _sqlite_path.is_absolute():
+                _sqlite_path = (BASE_DIR / _sqlite_path).resolve()
+            else:
+                _sqlite_path = _sqlite_path.resolve()
+            _sqlite_path.parent.mkdir(parents=True, exist_ok=True)
+            _db_cfg["NAME"] = str(_sqlite_path)
     # Re-verify connection per request (helps free dynos + dropped PG connections)
     _db_cfg["CONN_HEALTH_CHECKS"] = True
     # connect_timeout is valid for PostgreSQL; SQLite's sqlite3.connect() rejects it (TypeError).
