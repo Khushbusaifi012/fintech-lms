@@ -104,8 +104,8 @@ export default function Dashboard() {
 
         setLoanSeries({
           labels: data.labels || [],
-          newLoans: data.new_loans || [],
-          disbursements: data.disbursements || [],
+          newLoans: (data.new_loans || []).map((n) => Number(n) || 0),
+          disbursements: (data.disbursements || []).map((n) => Number(n) || 0),
         })
 
         setLastSynced(
@@ -155,6 +155,7 @@ export default function Dashboard() {
         data: loanSeries.newLoans,
         backgroundColor: 'rgba(20,184,166,0.85)',
         borderRadius: 6,
+        maxBarThickness: 56,
       },
     ],
   }
