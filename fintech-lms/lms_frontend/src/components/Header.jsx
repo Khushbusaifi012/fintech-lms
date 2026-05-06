@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useLayoutEffect, useState } from 'react'
 
 export default function Header({ title, subtitle }) {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
     localStorage.setItem('theme', theme)
   }, [theme])
